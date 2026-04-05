@@ -1,0 +1,5 @@
+# Keep backend and operational files local-only
+private/
+
+# Optional: keep only the public app in this repo
+# (public/ remains tracked)
