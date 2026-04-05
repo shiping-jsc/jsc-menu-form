@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Integration Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin-bottom: 0.5rem;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e74c3c;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 1rem;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .button-group button {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .output.success {
+            background: #edfcf0;
+            border-color: #27ae60;
+            color: #27ae60;
+        }
+
+        .output.error {
+            background: #fdeaea;
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        .step {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .success {
+            color: #27ae60;
+        }
+
+        .error {
+            color: #e74c3c;
+        }
+
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            color: #1976d2;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Form Integration Tester</h1>
+            <p>Local testing tool for Squarespace-Google Sheets integration</p>
+        </div>
+
+        <div class="content">
+            <!-- Configuration Section -->
+            <div class="section">
+                <h2>⚙️ Configuration</h2>
+
+                <div class="info">
+                    <strong>Important:</strong> Update the deployment URL below before testing
+                </div>
+
+                <div class="form-group">
+                    <label for="deploymentUrl">Apps Script Deployment URL</label>
+                    <input
+                        type="text"
+                        id="deploymentUrl"
+                        placeholder="https://script.google.com/macros/d/{DEPLOYMENT_ID}/usercodeapp"
+                        value=""
+                    />
+                    <small style="color: #666;">Found in Apps Script > Deploy > Web app</small>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="testConnection()">Test Connection</button>
+                    <button onclick="saveConfig()">Save Config</button>
+                </div>
+
+                <div id="connectionOutput" class="output hidden"></div>
+            </div>
+
+            <!-- Token Generation Section -->
+            <div class="section">
+                <h2>🔐 Token Generation</h2>
+
+                <div class="step">
+                    <div class="step-title">Generate Form Link</div>
+                    <div class="step-description">
+                        Create a signed token link for a customer email
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tokenEmail">Customer Email</label>
+                        <input
+                            type="email"
+                            id="tokenEmail"
+                            placeholder="customer@example.com"
+                            value="test@example.com"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="formId">Form ID</label>
+                        <select id="formId">
+                            <option value="order">Order Form</option>
+                            <option value="feedback">Feedback Form</option>
+                            <option value="reservation">Reservation Form</option>
+                        </select>
+                    </div>
+
+                    <button onclick="generateToken()">Generate Token</button>
+                </div>
+
+                <div id="tokenOutput" class="output hidden"></div>
+            </div>
+
+            <!-- Prefill Test Section -->
+            <div class="section">
+                <h2>📝 Prefill Test</h2>
+
+                <div class="step">
+                    <div class="step-title">Test Token Validation & Prefill</div>
+                    <div class="step-description">
+                        Verify token validation and check how form data is prefilled
+                    </div>
+
+                    <div class="grid">
+                        <div class="form-group">
+                            <label for="prefillToken">Token (from above)</label>
+                            <input
+                                type="text"
+                                id="prefillToken"
+                                placeholder="Paste generated token here"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="prefillFormId">Form ID</label>
+                            <select id="prefillFormId">
+                                <option value="order">Order Form</option>
+                                <option value="feedback">Feedback Form</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="testPrefill()">Test Prefill</button>
+                </div>
+
+                <div id="prefillOutput" class="output hidden"></div>
+            </div>
+
+            <!-- Form Submission Test Section -->
+            <div class="section">
+                <h2>✉️ Form Submission Test</h2>
+
+                <div class="step">
+                    <div class="step-title">Test Complete Form Submission</div>
+                    <div class="step-description">
+                        Submit a form with all fields and verify it's saved to Google Sheets
+                    </div>
+
+                    <div id="submissionForm"></div>
+
+                    <button onclick="submitTestForm()">Submit Form</button>
+                </div>
+
+                <div id="submissionOutput" class="output hidden"></div>
+            </div>
+
+            <!-- Logs Section -->
+            <div class="section">
+                <h2>📋 Activity Log</h2>
+                <button onclick="clearLogs()">Clear Logs</button>
+                <div id="activityLog" class="output" style="height: 200px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Local state
+        let state = {
+            deploymentUrl: localStorage.getItem('deploymentUrl') || '',
+            token: null,
+        };
+
+        // Load saved config
+        document.addEventListener('DOMContentLoaded', () => {
+            if (state.deploymentUrl) {
+                document.getElementById('deploymentUrl').value = state.deploymentUrl;
+            }
+            log('Tester loaded. Enter deployment URL to begin.');
+        });
+
+        // Logging
+        function log(message, data = null) {
+            const logDiv = document.getElementById('activityLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+
+            if (data) {
+                entry.textContent = `[${timestamp}] ${message}: ${JSON.stringify(data, null, 2)}`;
+            } else {
+                entry.textContent = `[${timestamp}] ${message}`;
+            }
+
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('activityLog').innerHTML = '';
+        }
+
+        // Configuration
+        function saveConfig() {
+            const url = document.getElementById('deploymentUrl').value.trim();
+            if (!url) {
+                alert('Please enter deployment URL');
+                return;
+            }
+            state.deploymentUrl = url;
+            localStorage.setItem('deploymentUrl', url);
+            log('Configuration saved');
+            showOutput('connectionOutput', 'Configuration saved successfully!', 'success');
+        }
+
+        async function testConnection() {
+            if (!state.deploymentUrl) {
+                showOutput('connectionOutput', 'Please enter deployment URL first', 'error');
+                return;
+            }
+
+            try {
+                log('Testing connection to', state.deploymentUrl);
+                const response = await fetch(state.deploymentUrl);
+                const data = await response.json();
+
+                if (data.status === 'ok') {
+                    log('Connection successful');
+                    showOutput('connectionOutput', `✓ Connected!\nVersion: ${data.version}`, 'success');
+                } else {
+                    log('Unexpected response', data);
+                    showOutput('connectionOutput', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                log('Connection error', error.message);
+                showOutput('connectionOutput', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Token generation
+        async function generateToken() {
+            const email = document.getElementById('tokenEmail').value.trim();
+            const formId = document.getElementById('formId').value;
+
+            if (!email) {
+                alert('Enter email address');
+                return;
+            }
+
+            try {
+                log('Generating token for', { email, formId });
+
+                const url = `${state.deploymentUrl}?action=generateLink&email=${encodeURIComponent(email)}&form=${formId}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.success) {
+                    state.token = data.link.split('token=')[1];
+                    document.getElementById('prefillToken').value = state.token;
+
+                    log('Token generated', { email, formId });
+                    showOutput('tokenOutput', data.link, 'success');
+                } else {
+                    log('Token generation failed', data);
+                    showOutput('tokenOutput', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                log('Token generation error', error.message);
+                showOutput('tokenOutput', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Prefill test
+        async function testPrefill() {
+            const token = document.getElementById('prefillToken').value.trim();
+            const formId = document.getElementById('prefillFormId').value;
+
+            if (!token) {
+                alert('Enter or generate a token');
+                return;
+            }
+
+            try {
+                log('Testing prefill with token');
+
+                const url = `${state.deploymentUrl}?token=${encodeURIComponent(token)}&form=${formId}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.success) {
+                    log('Prefill successful', data.prefillData);
+                    const output = `✓ Prefill successful!\n\nEmail: ${data.prefillData.email}\n\n${JSON.stringify(data, null, 2)}`;
+                    showOutput('prefillOutput', output, 'success');
+                } else {
+                    log('Prefill failed', data);
+                    showOutput('prefillOutput', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                log('Prefill error', error.message);
+                showOutput('prefillOutput', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Submission test
+        async function submitTestForm() {
+            const token = document.getElementById('prefillToken').value.trim();
+
+            if (!token) {
+                alert('Generate a token first');
+                return;
+            }
+
+            // Get form data
+            const form = document.getElementById('submissionForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            try {
+                log('Submitting form', data);
+
+                const response = await fetch(state.deploymentUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token,
+                        form: 'order',
+                        data,
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    log('Submission successful', result);
+                    const output = `✓ Submission successful!\n\nSubmission ID: ${result.submissionId}\n\nCheck your Google Sheet for the new row.`;
+                    showOutput('submissionOutput', output, 'success');
+                } else {
+                    log('Submission failed', result);
+                    showOutput('submissionOutput', JSON.stringify(result, null, 2), 'error');
+                }
+            } catch (error) {
+                log('Submission error', error.message);
+                showOutput('submissionOutput', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Helper: show output
+        function showOutput(elementId, message, type = 'info') {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = `output ${type}`;
+            el.classList.remove('hidden');
+        }
+
+        // Build submission form dynamically
+        function buildSubmissionForm() {
+            const form = document.getElementById('submissionForm');
+            const token = document.getElementById('prefillToken').value;
+            const email = token ? 'test@example.com' : '';
+
+            form.innerHTML = `
+                <div class="form-group">
+                    <label for="subEmail">Email</label>
+                    <input type="email" id="subEmail" name="email" value="${email}" readonly />
+                </div>
+                <div class="form-group">
+                    <label for="subProduct">Product Selection</label>
+                    <select id="subProduct" name="productSelection" required>
+                        <option value="">-- Select --</option>
+                        <option value="meal_plan_basic">Meal Plan - Basic</option>
+                        <option value="meal_plan_premium">Meal Plan - Premium</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Delivery Method</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <label style="display: flex; align-items: center; font-weight: normal; margin: 0;">
+                            <input type="radio" name="deliveryMethod" value="pickup" required style="width: auto; margin-right: 0.5rem;" /> Pickup
+                        </label>
+                        <label style="display: flex; align-items: center; font-weight: normal; margin: 0;">
+                            <input type="radio" name="deliveryMethod" value="ship" style="width: auto; margin-right: 0.5rem;" /> Ship
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="subQuantity">Quantity</label>
+                    <input type="number" id="subQuantity" name="quantity" value="1" min="1" required />
+                </div>
+                <div class="form-group">
+                    <label for="subNotes">Special Requests</label>
+                    <textarea id="subNotes" name="specialRequests" rows="3" placeholder="Optional"></textarea>
+                </div>
+            `;
+        }
+
+        // Build form when token changes
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'prefillToken') {
+                buildSubmissionForm();
+            }
+        });
+
+        // Initial form build
+        buildSubmissionForm();
+    </script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jackie's Supper Club — Weekly Menu Selection</title>
+  <link rel="stylesheet" href="form.css">
+</head>
+<body>
+<div id="jsc-form-app">
+
+  <!-- ── Loading state ─────────────────────────────────────────────── -->
+  <div id="screen-loading" class="screen">
+    <p class="loading-msg">Loading your form&hellip;</p>
+  </div>
+
+  <!-- ── Error state (bad / expired token) ────────────────────────── -->
+  <div id="screen-error" class="screen hidden">
+    <h2 id="error-heading" class="error-heading">Something went wrong</h2>
+    <p id="error-detail" class="error-detail"></p>
+    <p id="error-contact" class="error-detail">If you have any questions, please contact <a href="mailto:operations@jackiessupperclub.com">operations@jackiessupperclub.com</a>.</p>
+  </div>
+
+  <!-- ── Main form ──────────────────────────────────────────────────── -->
+  <div id="screen-form" class="screen hidden">
+
+    <header class="form-header">
+      <h1>Weekly Menu Selection</h1>
+      <p id="plan-subtitle" class="form-subtitle"></p>
+    </header>
+
+    <form id="order-form" novalidate>
+
+      <!-- § Identity ─────────────────────────────────────────────── -->
+      <section class="form-section" id="section-identity">
+        <div class="field-group">
+          <label class="field-label" for="field-name">Full name <span class="req">*</span></label>
+          <input type="text" id="field-name" name="fullName" class="text-input" autocomplete="name" readonly aria-readonly="true" required>
+          <p class="field-hint">Your name is linked to this invitation.</p>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="field-email">Email <span class="req">*</span></label>
+          <input type="email" id="field-email" name="email" class="text-input" readonly aria-readonly="true">
+          <p class="field-hint">Your email is confirmed — it cannot be changed.</p>
+        </div>
+      </section>
+
+      <!-- § Dinner selections (rendered by JS) ───────────────────── -->
+      <section class="form-section" id="section-dinners">
+        <!-- form.js injects dinner-1 … dinner-N blocks here -->
+      </section>
+
+      <!-- § Lunch kit — curated plans only (rendered by JS) ──────── -->
+      <section class="form-section hidden" id="section-lunch">
+        <!-- form.js injects lunch-kit + conditional protein block here -->
+      </section>
+
+      <!-- § Add-ons trigger ──────────────────────────────────────── -->
+      <section class="form-section" id="section-addon-trigger">
+        <h2 class="section-heading">Add-ons</h2>
+        <p class="section-desc">Would you like to add any extra items to your order this week?</p>
+        <div class="radio-group" role="radiogroup" aria-label="Add-ons">
+          <label class="radio-item">
+            <input type="radio" name="wantsAddOns" value="yes" id="addon-yes">
+            <span>Yes, I&rsquo;d like to add on</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="wantsAddOns" value="no" id="addon-no">
+            <span>No, I&rsquo;m all set</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- § Add-on details — shown only when wantsAddOns=yes ─────── -->
+      <section class="form-section hidden" id="section-addons">
+
+        <!-- Add-on: extra dinner portions -->
+        <div id="addon-dinners-wrap">
+          <h3 class="subsection-heading">Extra dinner items</h3>
+          <p class="section-desc">All add-on dinners are <strong>fully cooked</strong>. Select how many extra portions you'd like of each item.</p>
+          <div id="addon-dinner-list">
+            <!-- form.js injects one checkbox row per dinner option here -->
+          </div>
+        </div>
+
+        <!-- Add-on: lunch kit -->
+        <div id="addon-lunch-wrap">
+          <h3 class="subsection-heading">Add-on lunch kit</h3>
+          <div class="radio-group" id="addon-lunchkit-options" role="radiogroup" aria-label="Add-on lunch kit">
+            <label class="radio-item">
+              <input type="radio" name="addOnLunchKit" value="soup_2">
+              <span>+2 portions soup <span class="price">$42</span></span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="addOnLunchKit" value="salad_2">
+              <span>+2 portions salad <span class="price">$42</span></span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="addOnLunchKit" value="soup_4">
+              <span>+4 portions soup <span class="price">$84</span></span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="addOnLunchKit" value="salad_4">
+              <span>+4 portions salad <span class="price">$84</span></span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="addOnLunchKit" value="half_4">
+              <span>+4 portions half soup / half salad <span class="price">$84</span></span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="addOnLunchKit" value="none">
+              <span>No add-on lunch kit</span>
+            </label>
+          </div>
+
+          <!-- Add-on protein — shown only when addOnLunchKit=half_4 -->
+          <div id="addon-protein-wrap" class="hidden">
+            <h3 class="subsection-heading">Add-on lunch kit protein</h3>
+            <p class="field-hint">Shown separately from your plan&rsquo;s included lunch protein (if any).</p>
+            <select id="field-addon-protein" name="addOnLunchProtein" class="select-input">
+              <option value="">— choose protein —</option>
+              <!-- form.js injects options from menuOptions.proteins -->
+            </select>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- § Order total — shown when add-ons selected ────────────── -->
+      <section class="form-section hidden" id="section-order-total">
+        <p class="order-total-label">Add-ons summary</p>
+        <ul id="order-total-lines"></ul>
+        <div id="order-total-amount"></div>
+        <p class="field-hint">We will bill this add-on total to your payment method on file.</p>
+      </section>
+
+      <!-- § Notes — always shown ──────────────────────────────────── -->
+      <section class="form-section" id="section-notes">
+        <div class="field-group">
+          <label class="field-label" for="field-notes">Anything else you&rsquo;d like us to know? <span class="optional">(optional)</span></label>
+          <textarea id="field-notes" name="notes" class="textarea-input" rows="4" maxlength="500" placeholder="Allergies, preferences, delivery notes…"></textarea>
+          <p class="char-counter"><span id="notes-count">0</span>/500</p>
+        </div>
+      </section>
+
+      <!-- § Submit ────────────────────────────────────────────────── -->
+      <section class="form-section form-actions">
+        <button type="submit" id="btn-submit" class="btn btn-primary">Submit order</button>
+        <p id="submit-error" class="submit-error hidden"></p>
+      </section>
+
+    </form>
+  </div><!-- /#screen-form -->
+
+  <!-- ── Success state ─────────────────────────────────────────────── -->
+  <div id="screen-success" class="screen hidden">
+    <div class="success-icon" aria-hidden="true">✓</div>
+    <h2>Thank you!</h2>
+    <p>Your selections for this week have been received.</p>
+    <p class="submission-id">Confirmation ID: <strong id="success-submission-id"></strong></p>
+  </div>
+
+</div><!-- /#jsc-form-app -->
+
+<script>
+  // Local/Squarespace frontend should call this Apps Script web app URL.
+  window.FORM_API_URL = 'https://script.google.com/macros/s/AKfycbxhRLT2zEt_as8kQjhmmZQ1kVs9OJVo5kDsQzs0VbRAoz_EjNEEbWqpg5UarKf06NRiDw/exec';
+</script>
+<script src="form.js"></script>
+</body>
+</html>
