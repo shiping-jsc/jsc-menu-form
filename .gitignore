@@ -3,3 +3,7 @@ private/
 
 # Optional: keep only the public app in this repo
 # (public/ remains tracked)
+
+# Keep optional form config local-only
+formConfig.js
+public/formConfig.js
