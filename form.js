@@ -8,6 +8,7 @@ var _token = null;
 var _planConfig = null;
 var _menuOptions = null;
 var _formConfig = null;
+var _prefillData = null;
 
 function qs(sel) { return document.querySelector(sel); }
 function qsa(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
@@ -46,6 +47,19 @@ function nameFromEmail(email) {
       return part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : part;
     })
     .join(' ');
+}
+
+function parseIsoDate(iso) {
+  var parts = String(iso || '').split('-');
+  if (parts.length !== 3) return new Date();
+  return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+}
+
+function formatDeliveryDateLong(weekStart) {
+  var d = parseIsoDate(weekStart);
+  var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  return days[d.getDay()] + ' ' + months[d.getMonth()] + ' ' + d.getDate();
 }
 
 function switchScreen(id) {
@@ -194,7 +208,7 @@ function renderAddOns() {
       var qid = 'addon-qty-' + opt.value + '-' + q;
       qtyWrap.appendChild(createEl('label', { className: 'radio-item', htmlFor: qid }, [
         createEl('input', { type: 'radio', id: qid, name: 'addon-qty-' + opt.value, value: q }),
-        ' +' + q + ' portions ', createEl('span', { className: 'price' }, [price])
+        createEl('span', {}, [' +' + q + ' portions ', createEl('span', { className: 'price' }, [price])])
       ]));
     });
 
@@ -217,6 +231,94 @@ function renderAddOns() {
     (_menuOptions.proteins || []).forEach(function(opt) {
       addOnProtein.appendChild(createEl('option', { value: opt.value }, [opt.label]));
     });
+  }
+}
+
+function setSectionComplete(sectionId, complete) {
+  var section = document.getElementById(sectionId);
+  if (!section) return;
+  if (complete) section.classList.add('section-complete');
+  else section.classList.remove('section-complete');
+}
+
+function updateCompletionStates() {
+  var form = document.getElementById('order-form');
+  if (!form) return;
+
+  var identityComplete = !!(qs('#field-name') && qs('#field-name').value && qs('#field-email') && qs('#field-email').value);
+  setSectionComplete('section-identity', identityComplete);
+
+  var dinnerCompleteCount = 0;
+  qsa('#section-dinners .dinner-block').forEach(function(block, idx) {
+    var i = idx + 1;
+    var dinnerSel = qs('[name="dinner' + i + '"]');
+    var prepSel = qs('[name="dinner' + i + 'Prep"]:checked');
+    var complete = !!(dinnerSel && dinnerSel.value && prepSel);
+    if (complete) dinnerCompleteCount++;
+    if (complete) block.classList.add('section-complete');
+    else block.classList.remove('section-complete');
+  });
+  setSectionComplete('section-dinners', dinnerCompleteCount === _planConfig.dinnerCount);
+
+  if (_planConfig.showLunch) {
+    var lunchKit = qs('[name="lunchKit"]:checked');
+    var lunchProteinWrap = document.getElementById('plan-protein-wrap');
+    var needsProtein = lunchProteinWrap && !lunchProteinWrap.classList.contains('hidden');
+    var lunchProtein = qs('#field-lunch-protein');
+    var lunchComplete = !!lunchKit && (!needsProtein || (lunchProtein && lunchProtein.value));
+    setSectionComplete('section-lunch', lunchComplete);
+  }
+
+  var wantsAddOns = qs('[name="wantsAddOns"]:checked');
+  setSectionComplete('section-addon-trigger', !!wantsAddOns);
+
+  var addOnsSection = document.getElementById('section-addons');
+  if (addOnsSection && !addOnsSection.classList.contains('hidden')) {
+    var validAddOns = true;
+    qsa('#addon-dinner-list input[type="checkbox"]:checked').forEach(function(cb) {
+      var v = cb.getAttribute('data-dinner');
+      if (!qs('[name="addon-qty-' + v + '"]:checked')) validAddOns = false;
+    });
+    var addOnLunch = qs('[name="addOnLunchKit"]:checked');
+    var addOnProteinWrap = document.getElementById('addon-protein-wrap');
+    if (addOnProteinWrap && !addOnProteinWrap.classList.contains('hidden')) {
+      var addOnProtein = qs('#field-addon-protein');
+      if (!addOnProtein || !addOnProtein.value) validAddOns = false;
+    }
+    setSectionComplete('section-addons', validAddOns && (!!addOnLunch || qsa('#addon-dinner-list input[type="checkbox"]:checked').length > 0 || (wantsAddOns && wantsAddOns.value === 'no')));
+  } else {
+    setSectionComplete('section-addons', false);
+  }
+}
+
+function updateSuccessCopy(updated) {
+  var main = document.getElementById('success-message-main');
+  var delivery = document.getElementById('success-message-delivery');
+  var weekStart = _prefillData && _prefillData.weekStart ? _prefillData.weekStart : '';
+  var deliveryDate = formatDeliveryDateLong(weekStart);
+
+  if (main) {
+    main.textContent =
+      (updated ? 'Thank you for updating your weekly menu selections! ' : 'Thank you for submitting your weekly menu selections! ') +
+      'You will receive an email with a copy of your selections. If you need to make any changes, please resubmit before Wednesday at 11am.';
+  }
+  if (delivery) {
+    delivery.textContent = 'Food deliveries will be made on ' + deliveryDate + ' between the hours of 2-7pm.';
+  }
+}
+
+function updateResubmissionBanner(existingSubmission) {
+  var banner = document.getElementById('resubmission-banner');
+  var text = document.getElementById('resubmission-text');
+  if (!banner || !text) return;
+
+  if (existingSubmission && existingSubmission.submissionId) {
+    text.textContent =
+      'We already received a submission for this week (Confirmation ID: ' + existingSubmission.submissionId + '). ' +
+      'Submitting this form again will update your existing submission.';
+    show(banner);
+  } else {
+    hide(banner);
   }
 }
 
@@ -288,6 +390,7 @@ function attachUIHandlers() {
         }
       }
       updateTotal();
+      updateCompletionStates();
     });
   });
 
@@ -303,18 +406,28 @@ function attachUIHandlers() {
         sel.removeAttribute('required');
         sel.value = '';
       }
+      updateCompletionStates();
     });
   });
 
   var addonsSection = document.getElementById('section-addons');
   if (addonsSection) {
-    addonsSection.addEventListener('change', function() { updateTotal(); });
+    addonsSection.addEventListener('change', function() {
+      updateTotal();
+      updateCompletionStates();
+    });
   }
 
   var notes = document.getElementById('field-notes');
   var count = document.getElementById('notes-count');
   if (notes && count) {
     notes.addEventListener('input', function() { count.textContent = String(notes.value.length); });
+  }
+
+  var form = document.getElementById('order-form');
+  if (form) {
+    form.addEventListener('change', updateCompletionStates);
+    form.addEventListener('input', updateCompletionStates);
   }
 }
 
@@ -411,6 +524,7 @@ function submitHandler(e) {
         throw new Error((body.error || 'Submission failed') + detail);
       }
       document.getElementById('success-submission-id').textContent = body.submissionId || '';
+      updateSuccessCopy(!!body.updated);
       switchScreen('screen-success');
     })
     .catch(function(ex) {
@@ -443,6 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
       _planConfig = body.planConfig;
       _menuOptions = body.menuOptions || { dinners: [], proteins: [] };
       _formConfig = body.formConfig || {};
+      _prefillData = body.prefillData || {};
 
       document.getElementById('field-email').value = body.prefillData.email || '';
       document.getElementById('field-name').value =
@@ -455,6 +570,9 @@ document.addEventListener('DOMContentLoaded', function() {
       renderAddOns();
       attachUIHandlers();
       updateTotal();
+      updateCompletionStates();
+      updateResubmissionBanner(body.prefillData && body.prefillData.existingSubmission);
+      updateSuccessCopy(false);
 
       document.getElementById('order-form').addEventListener('submit', submitHandler);
       switchScreen('screen-form');

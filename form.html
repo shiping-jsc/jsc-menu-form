@@ -29,6 +29,10 @@
       <p id="plan-subtitle" class="form-subtitle"></p>
     </header>
 
+    <section id="resubmission-banner" class="form-section hidden">
+      <p id="resubmission-text" class="section-desc"></p>
+    </section>
+
     <form id="order-form">
 
       <!-- § Identity ─────────────────────────────────────────────── -->
@@ -62,7 +66,7 @@
         <div class="radio-group" role="radiogroup" aria-label="Add-ons">
           <label class="radio-item">
             <input type="radio" name="wantsAddOns" value="yes" id="addon-yes">
-            <span>Yes, I&rsquo;d like to add on</span>
+            <span>Yes, I&rsquo;d like to review the add ons</span>
           </label>
           <label class="radio-item">
             <input type="radio" name="wantsAddOns" value="no" id="addon-no">
@@ -152,7 +156,8 @@
   <div id="screen-success" class="screen hidden">
     <div class="success-icon" aria-hidden="true">✓</div>
     <h2>Thank you!</h2>
-    <p>Your selections for this week have been received.</p>
+    <p id="success-message-main">Thank you for submitting your weekly menu selections! You will receive an email with a copy of your selections. If you need to make any changes, please resubmit before Wednesday at 11am.</p>
+    <p id="success-message-delivery">Food deliveries will be made on Monday April 6 between the hours of 2-7pm.</p>
     <p class="submission-id">Confirmation ID: <strong id="success-submission-id"></strong></p>
   </div>
 

@@ -448,6 +448,11 @@ body {
   box-shadow: var(--shadow);
 }
 
+.form-section.section-complete {
+  background: #f2fbf5;
+  border-color: #b7ebc5;
+}
+
 .section-heading {
   font-size: .75rem;
   font-weight: 700;
@@ -479,6 +484,13 @@ body {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px dashed var(--border);
+}
+
+.dinner-block.section-complete {
+  background: #f7fdf9;
+  border: 1px solid #d1f0db;
+  border-radius: var(--radius);
+  padding: .9rem;
 }
 
 /* ── Field groups ───────────────────────────────────────────────── */
@@ -583,10 +595,14 @@ body {
   height: 1rem;
 }
 
-.radio-item span,
-.checkbox-item span {
+.radio-item > span,
+.checkbox-item > span {
   flex: 1;
   min-width: 0;
+}
+
+.addon-qty-wrap .radio-item {
+  padding-right: .75rem;
 }
 
 .portion-hint {
