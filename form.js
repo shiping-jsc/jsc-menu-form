@@ -9,6 +9,7 @@ var _planConfig = null;
 var _menuOptions = null;
 var _formConfig = null;
 var _prefillData = null;
+var _apiUrl = null;
 
 function qs(sel) { return document.querySelector(sel); }
 function qsa(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
@@ -91,6 +92,14 @@ function showFatal(message) {
   }
 
   switchScreen('screen-error');
+}
+
+function resolveApiUrl() {
+  var apiParam = getParam('api');
+  if (apiParam && /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec(?:\?.*)?$/.test(apiParam)) {
+    return apiParam;
+  }
+  return window.FORM_API_URL || '';
 }
 
 function renderDinners() {
@@ -506,7 +515,7 @@ function submitHandler(e) {
   btn.disabled = true;
   btn.textContent = 'Submitting...';
 
-  fetch(window.FORM_API_URL, {
+  fetch(_apiUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ token: _token, data: collectData() })
@@ -538,7 +547,9 @@ function submitHandler(e) {
 document.addEventListener('DOMContentLoaded', function() {
   switchScreen('screen-loading');
 
-  if (!window.FORM_API_URL) {
+  _apiUrl = resolveApiUrl();
+
+  if (!_apiUrl) {
     showFatal('FORM_API_URL is not configured.');
     return;
   }
@@ -549,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
-  fetch(window.FORM_API_URL + '?token=' + encodeURIComponent(_token))
+  fetch(_apiUrl + '?token=' + encodeURIComponent(_token))
     .then(function(r) { return r.json(); })
     .then(function(body) {
       if (!body.success) throw new Error(body.error || 'Could not load form.');
