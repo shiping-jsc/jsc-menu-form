@@ -9,6 +9,7 @@ AUTO_COMMIT=false
 AUTO_PUSH=false
 DEPLOYMENT_ID=""
 IN_PLACE=true
+SKIP_SMOKE=false
 
 for arg in "$@"; do
   case "$arg" in
@@ -24,12 +25,14 @@ What it does:
 3) Builds /exec URL from the deployment ID
 4) Updates form.html window.FORM_API_URL automatically
 5) Optionally commits/pushes the frontend update
+6) Runs a smoke test against generateLink endpoint (default)
 
 Flags:
   --commit   Create a git commit with updated form.html
   --push     Push commit to origin/main (implies --commit)
   --deployment-id <id>  Force a specific deployment ID to update
   --new-deployment       Create a new deployment ID instead of in-place update
+  --skip-smoke           Skip API smoke test (not recommended)
 USAGE
       exit 0
       ;;
@@ -56,6 +59,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --new-deployment)
       IN_PLACE=false
+      shift
+      ;;
+    --skip-smoke)
+      SKIP_SMOKE=true
       shift
       ;;
     --help|-h)
@@ -107,7 +114,22 @@ sed -i '' -E "s|window\\.FORM_API_URL = '[^']+';|window.FORM_API_URL = '$API_URL
 
 echo "Updated FORM_API_URL in $FORM_HTML"
 
-echo "[4/4] Optional git commit/push..."
+if [[ "$SKIP_SMOKE" == false ]]; then
+  echo "[4/5] Running API smoke test..."
+  TEST_EMAIL="deploy-smoke+$(date '+%Y%m%d%H%M%S')@example.com"
+  RESP="$(curl -sS -L "$API_URL?action=generateLink&customerEmail=$TEST_EMAIL&name=Deploy%20Smoke&weekStart=2026-04-13")"
+  if ! printf '%s' "$RESP" | node -e 'const fs=require("fs");const s=fs.readFileSync(0,"utf8");let ok=false;try{const j=JSON.parse(s);ok=!!(j&&j.success&&j.link);}catch(_){ok=false;}if(!ok){process.exit(1);}'; then
+    echo "Smoke test failed: endpoint did not return expected JSON success payload." >&2
+    echo "Likely causes:" >&2
+    echo "  1) Web app access settings changed (Apps Script Deploy > Manage deployments)." >&2
+    echo "  2) Deployment ID in form.html does not map to a callable web app." >&2
+    echo "  3) You need to update the existing web app deployment instead of creating a new ID." >&2
+    exit 2
+  fi
+  echo "Smoke test passed."
+fi
+
+echo "[5/5] Optional git commit/push..."
 if [[ "$AUTO_COMMIT" == true ]]; then
   git add form.html
   git commit -m "Sync frontend API URL to latest Apps Script deployment"
