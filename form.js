@@ -169,7 +169,10 @@ function renderLunch() {
     ]));
   });
 
-  section.appendChild(createEl('h2', { className: 'section-heading' }, ['Lunch kit']));
+  section.appendChild(createEl('h2', { className: 'section-heading' }, [
+    'Lunch kit ',
+    createEl('span', { className: 'req' }, ['*'])
+  ]));
   section.appendChild(radios);
 
   var proteinWrap = createEl('div', { className: 'field-group hidden', id: 'plan-protein-wrap' });

@@ -486,11 +486,14 @@ body {
   border-top: 1px dashed var(--border);
 }
 
+.dinner-block {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
 .dinner-block.section-complete {
   background: #f7fdf9;
-  border: 1px solid #d1f0db;
-  border-radius: var(--radius);
-  padding: .9rem;
+  border-color: #d1f0db;
 }
 
 /* ── Field groups ───────────────────────────────────────────────── */
