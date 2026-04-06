@@ -489,6 +489,7 @@ body {
 .dinner-block {
   border: 1px solid transparent;
   border-radius: var(--radius);
+  padding: .45rem .65rem;
 }
 
 .dinner-block.section-complete {
