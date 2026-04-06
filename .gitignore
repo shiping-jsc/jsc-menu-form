@@ -7,3 +7,6 @@ private/
 # Keep optional form config local-only
 formConfig.js
 public/formConfig.js
+
+# Keep deployment ops docs local only
+DEPLOYMENT_RUNBOOK.md
