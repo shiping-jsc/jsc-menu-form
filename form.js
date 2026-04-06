@@ -248,7 +248,7 @@ function updateTotal() {
   });
 
   var lunchRadio = qs('[name="addOnLunchKit"]:checked');
-  if (lunchRadio && lunchRadio.value && lunchRadio.value !== 'none') {
+  if (lunchRadio && lunchRadio.value) {
     var lunchOpt = (_formConfig.addonLunchKitOptions || []).filter(function(o) { return o.value === lunchRadio.value; })[0];
     if (lunchOpt) {
       var lunchPrice = parsePrice(lunchOpt.price);
@@ -273,7 +273,20 @@ function attachUIHandlers() {
   qsa('[name="wantsAddOns"]').forEach(function(r) {
     r.addEventListener('change', function() {
       if (r.checked && r.value === 'yes') show(document.getElementById('section-addons'));
-      if (r.checked && r.value === 'no') hide(document.getElementById('section-addons'));
+      if (r.checked && r.value === 'no') {
+        hide(document.getElementById('section-addons'));
+        qsa('#addon-dinner-list input[type="checkbox"]').forEach(function(cb) { cb.checked = false; });
+        qsa('#addon-dinner-list input[type="radio"]').forEach(function(rb) { rb.checked = false; });
+        qsa('[name="addOnLunchKit"]').forEach(function(rb) { rb.checked = false; });
+
+        var wrap = document.getElementById('addon-protein-wrap');
+        var sel = document.getElementById('field-addon-protein');
+        if (wrap) hide(wrap);
+        if (sel) {
+          sel.removeAttribute('required');
+          sel.value = '';
+        }
+      }
       updateTotal();
     });
   });
@@ -345,8 +358,34 @@ function collectData() {
   return data;
 }
 
+function validateBeforeSubmit() {
+  var form = document.getElementById('order-form');
+  if (!form) return false;
+
+  qsa('#addon-dinner-list input[type="checkbox"]').forEach(function(cb) {
+    cb.setCustomValidity('');
+  });
+
+  qsa('#addon-dinner-list input[type="checkbox"]:checked').forEach(function(cb) {
+    var v = cb.getAttribute('data-dinner');
+    var qty = qs('[name="addon-qty-' + v + '"]:checked');
+    if (!qty) {
+      cb.setCustomValidity('Please choose +2 or +4 portions for this add-on dinner.');
+    }
+  });
+
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return false;
+  }
+
+  return true;
+}
+
 function submitHandler(e) {
   e.preventDefault();
+  if (!validateBeforeSubmit()) return;
+
   var err = document.getElementById('submit-error');
   hide(err);
 
@@ -356,7 +395,7 @@ function submitHandler(e) {
 
   fetch(window.FORM_API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ token: _token, data: collectData() })
   })
     .then(function(r) {

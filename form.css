@@ -554,14 +554,17 @@ body {
 .checkbox-item {
   display: flex;
   align-items: flex-start;
+  width: 100%;
   gap: .55rem;
   padding: .55rem .75rem;
+  padding-right: 1rem;
   border-radius: var(--radius);
   border: 1.5px solid var(--border);
   background: var(--bg-subtle);
   cursor: pointer;
   font-size: .92rem;
   line-height: 1.45;
+  overflow: visible;
   transition: border-color .15s, background .15s;
 }
 
@@ -578,6 +581,12 @@ body {
   flex-shrink: 0;
   width: 1rem;
   height: 1rem;
+}
+
+.radio-item span,
+.checkbox-item span {
+  flex: 1;
+  min-width: 0;
 }
 
 .portion-hint {
