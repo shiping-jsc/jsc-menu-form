@@ -357,9 +357,9 @@ function updateSuccessCopy(updated, submittedData) {
   var deliveryDate = formatDeliveryDateLong(weekStart);
 
   if (main) {
-    main.textContent =
-      (updated ? 'Thank you for updating the weekly menu selection form. ' : 'Thank you for submitting the weekly menu selection form. ') +
-      "Here's a copy of your selections.";
+    main.textContent = updated
+      ? 'Your weekly menu selection has been updated.'
+      : 'Your weekly menu selection has been received.';
   }
 
   if (addOn) {
@@ -624,23 +624,29 @@ function submitHandler(e) {
       hideSubmitProgress();
     })
     .catch(function(ex) {
-      // "Load failed" / "Failed to fetch" means the request was sent but the browser
-      // could not read the response — common in Safari when Apps Script redirects the
-      // response through script.googleusercontent.com (cross-origin ITP block).
-      // In this case the submission very likely succeeded server-side.
+      // "Load failed" / "Failed to fetch" = browser sent request but couldn't read
+      // the response — common in Safari (ITP blocks the cross-origin redirect that
+      // Apps Script uses to deliver POST responses). Verify by re-fetching the
+      // prefill: if the row is in the sheet the submission went through.
       var isNetworkReadError = /load failed|failed to fetch|networkerror/i.test(String(ex.message || ''));
       if (isNetworkReadError) {
-        document.getElementById('success-submission-id').textContent = '';
-        updateSuccessCopy(false, submittedData);
-        var emailNote = document.getElementById('success-email-note');
-        if (emailNote) {
-          emailNote.textContent =
-            'Your submission was sent. Please check your email for a confirmation. ' +
-            'If you don\u2019t receive it within a few minutes, contact operations@jackiessupperclub.com.';
-          show(emailNote);
-        }
-        switchScreen('screen-success');
-        hideSubmitProgress();
+        fetch(_apiUrl + '?token=' + encodeURIComponent(_token))
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            var existing = data.prefillData && data.prefillData.existingSubmission;
+            if (existing && existing.submissionId) {
+              document.getElementById('success-submission-id').textContent = existing.submissionId;
+              updateSuccessCopy(false, submittedData);
+              switchScreen('screen-success');
+            } else {
+              showSubmitUncertain(submittedData);
+            }
+            hideSubmitProgress();
+          })
+          .catch(function() {
+            showSubmitUncertain(submittedData);
+            hideSubmitProgress();
+          });
       } else {
         err.textContent = ex.message || 'Network error. Please try again.';
         show(err);
@@ -649,6 +655,19 @@ function submitHandler(e) {
         hideSubmitProgress();
       }
     });
+}
+
+function showSubmitUncertain(submittedData) {
+  document.getElementById('success-submission-id').textContent = '';
+  updateSuccessCopy(false, submittedData);
+  var emailNote = document.getElementById('success-email-note');
+  if (emailNote) {
+    emailNote.textContent =
+      'Your submission was sent. Please check your email for a confirmation. ' +
+      'If you don\u2019t receive it within a few minutes, contact operations@jackiessupperclub.com.';
+    show(emailNote);
+  }
+  switchScreen('screen-success');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
