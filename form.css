@@ -744,6 +744,9 @@ body {
 .success-icon { font-size: 2.75rem; display: block; margin-bottom: 1rem; }
 #screen-success h2 { color: var(--success); font-size: 1.5rem; margin-bottom: .5rem; }
 #screen-success p  { color: var(--text-light); font-size: .95rem; }
+#success-message-addons { margin-top: .55rem; }
+#success-message-changes { margin-top: .95rem; }
+#success-message-delivery { margin-top: .95rem; }
 
 .submission-id {
   display: inline-block;
@@ -755,6 +758,48 @@ body {
   padding: .45rem .75rem;
   border-radius: 4px;
   word-break: break-all;
+}
+
+#submit-progress-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.submit-progress-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.18);
+  min-width: 260px;
+  max-width: 360px;
+  text-align: center;
+  padding: 1rem 1.1rem;
+}
+
+.submit-progress-card p {
+  margin-top: .55rem;
+  color: var(--text);
+  font-size: .92rem;
+}
+
+.spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid #dbeafe;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  margin: 0 auto;
+  animation: spin .8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 @media (max-width: 600px) {

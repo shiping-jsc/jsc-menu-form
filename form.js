@@ -10,6 +10,7 @@ var _menuOptions = null;
 var _formConfig = null;
 var _prefillData = null;
 var _apiUrl = null;
+var _existingSubmission = null;
 
 function qs(sel) { return document.querySelector(sel); }
 function qsa(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
@@ -92,6 +93,14 @@ function showFatal(message) {
   }
 
   switchScreen('screen-error');
+}
+
+function showSubmitProgress() {
+  show(document.getElementById('submit-progress-overlay'));
+}
+
+function hideSubmitProgress() {
+  hide(document.getElementById('submit-progress-overlay'));
 }
 
 function resolveApiUrl() {
@@ -253,6 +262,42 @@ function setSectionComplete(sectionId, complete) {
   else section.classList.remove('section-complete');
 }
 
+function setResubmissionGatedSectionsVisible(visible) {
+  qsa('.resub-gated').forEach(function(el) {
+    if (visible) show(el);
+    else hide(el);
+  });
+}
+
+function isResubmissionAllowed() {
+  if (!_existingSubmission || !_existingSubmission.submissionId) return true;
+  var chosen = qs('[name="allowResubmission"]:checked');
+  return !!(chosen && chosen.value === 'yes');
+}
+
+function configureResubmissionChoice(existingSubmission) {
+  _existingSubmission = existingSubmission || null;
+
+  var section = document.getElementById('section-resubmission-choice');
+  var text = document.getElementById('resubmission-choice-text');
+  if (!section || !text) {
+    return;
+  }
+
+  if (_existingSubmission && _existingSubmission.submissionId) {
+    text.textContent =
+      'We already have a submission on record (Confirmation ID: ' + _existingSubmission.submissionId + '). ' +
+      'Would you like to resubmit an updated form? This will replace your existing responses on file.';
+    show(section);
+    var no = document.getElementById('resubmit-no');
+    if (no) no.checked = true;
+    setResubmissionGatedSectionsVisible(false);
+  } else {
+    hide(section);
+    setResubmissionGatedSectionsVisible(true);
+  }
+}
+
 function updateCompletionStates() {
   var form = document.getElementById('order-form');
   if (!form) return;
@@ -303,17 +348,46 @@ function updateCompletionStates() {
   }
 }
 
-function updateSuccessCopy(updated) {
+function updateSuccessCopy(updated, submittedData) {
   var main = document.getElementById('success-message-main');
+  var addOn = document.getElementById('success-message-addons');
+  var changes = document.getElementById('success-message-changes');
   var delivery = document.getElementById('success-message-delivery');
   var weekStart = _prefillData && _prefillData.weekStart ? _prefillData.weekStart : '';
   var deliveryDate = formatDeliveryDateLong(weekStart);
 
   if (main) {
     main.textContent =
-      (updated ? 'Thank you for updating your weekly menu selections! ' : 'Thank you for submitting your weekly menu selections! ') +
-      'You will receive an email with a copy of your selections. If you need to make any changes, please resubmit before Wednesday at 11am.';
+      (updated ? 'Thank you for updating the weekly menu selection form. ' : 'Thank you for submitting the weekly menu selection form. ') +
+      "Here's a copy of your selections.";
   }
+
+  if (addOn) {
+    var wantsAddOns = submittedData && submittedData.wantsAddOns === 'yes';
+    if (wantsAddOns) {
+      var total = 0;
+      (submittedData.addOnDinners || []).forEach(function(item) {
+        var portions = String(item.portions || '');
+        if (portions === '2') total += 76;
+        if (portions === '4') total += 144;
+      });
+      var addonLunch = submittedData.addOnLunchKit || '';
+      if (addonLunch) {
+        var lunchOpt = (_formConfig.addonLunchKitOptions || []).filter(function(o) { return o.value === addonLunch; })[0];
+        if (lunchOpt && lunchOpt.price) total += parsePrice(lunchOpt.price);
+      }
+
+      addOn.textContent = 'Add-ons total: $' + total + '. Add-ons will be billed to your payment method on file.';
+      show(addOn);
+    } else {
+      hide(addOn);
+    }
+  }
+
+  if (changes) {
+    changes.textContent = 'If you need to make any changes, please resubmit before Wednesday at 11am.';
+  }
+
   if (delivery) {
     delivery.textContent = 'Food deliveries will be made on ' + deliveryDate + ' between the hours of 2-7pm.';
   }
@@ -321,17 +395,7 @@ function updateSuccessCopy(updated) {
 
 function updateResubmissionBanner(existingSubmission) {
   var banner = document.getElementById('resubmission-banner');
-  var text = document.getElementById('resubmission-text');
-  if (!banner || !text) return;
-
-  if (existingSubmission && existingSubmission.submissionId) {
-    text.textContent =
-      'We already received a submission for this week (Confirmation ID: ' + existingSubmission.submissionId + '). ' +
-      'Submitting this form again will update your existing submission.';
-    show(banner);
-  } else {
-    hide(banner);
-  }
+  if (banner) hide(banner);
 }
 
 function parsePrice(str) {
@@ -384,6 +448,14 @@ function updateTotal() {
 }
 
 function attachUIHandlers() {
+  qsa('[name="allowResubmission"]').forEach(function(r) {
+    r.addEventListener('change', function() {
+      setResubmissionGatedSectionsVisible(r.value === 'yes');
+      updateTotal();
+      updateCompletionStates();
+    });
+  });
+
   qsa('[name="wantsAddOns"]').forEach(function(r) {
     r.addEventListener('change', function() {
       if (r.checked && r.value === 'yes') show(document.getElementById('section-addons'));
@@ -509,19 +581,30 @@ function validateBeforeSubmit() {
 
 function submitHandler(e) {
   e.preventDefault();
+  if (!isResubmissionAllowed()) {
+    var resubErr = document.getElementById('submit-error');
+    if (resubErr) {
+      resubErr.textContent = 'Please confirm resubmission to continue, or keep your existing responses.';
+      show(resubErr);
+    }
+    return;
+  }
+
   if (!validateBeforeSubmit()) return;
 
   var err = document.getElementById('submit-error');
   hide(err);
 
   var btn = document.getElementById('btn-submit');
+  var submittedData = collectData();
   btn.disabled = true;
   btn.textContent = 'Submitting...';
+  showSubmitProgress();
 
   fetch(_apiUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ token: _token, data: collectData() })
+    body: JSON.stringify({ token: _token, data: submittedData })
   })
     .then(function(r) {
       return r
@@ -536,14 +619,16 @@ function submitHandler(e) {
         throw new Error((body.error || 'Submission failed') + detail);
       }
       document.getElementById('success-submission-id').textContent = body.submissionId || '';
-      updateSuccessCopy(!!body.updated);
+      updateSuccessCopy(!!body.updated, submittedData);
       switchScreen('screen-success');
+      hideSubmitProgress();
     })
     .catch(function(ex) {
       err.textContent = ex.message || 'Network error';
       show(err);
       btn.disabled = false;
       btn.textContent = 'Submit order';
+      hideSubmitProgress();
     });
 }
 
@@ -586,6 +671,7 @@ document.addEventListener('DOMContentLoaded', function() {
       updateTotal();
       updateCompletionStates();
       updateResubmissionBanner(body.prefillData && body.prefillData.existingSubmission);
+      configureResubmissionChoice(body.prefillData && body.prefillData.existingSubmission);
       updateSuccessCopy(false);
 
       document.getElementById('order-form').addEventListener('submit', submitHandler);

@@ -49,18 +49,33 @@
         </div>
       </section>
 
+      <section class="form-section hidden" id="section-resubmission-choice">
+        <h2 class="section-heading">Existing submission found</h2>
+        <p id="resubmission-choice-text" class="section-desc"></p>
+        <div class="radio-group" role="radiogroup" aria-label="Resubmission confirmation">
+          <label class="radio-item" for="resubmit-no">
+            <input type="radio" id="resubmit-no" name="allowResubmission" value="no" checked>
+            <span>No, keep my existing responses</span>
+          </label>
+          <label class="radio-item" for="resubmit-yes">
+            <input type="radio" id="resubmit-yes" name="allowResubmission" value="yes">
+            <span>Yes, submit an updated form</span>
+          </label>
+        </div>
+      </section>
+
       <!-- § Dinner selections (rendered by JS) ───────────────────── -->
-      <section class="form-section" id="section-dinners">
+      <section class="form-section resub-gated" id="section-dinners">
         <!-- form.js injects dinner-1 … dinner-N blocks here -->
       </section>
 
       <!-- § Lunch kit — curated plans only (rendered by JS) ──────── -->
-      <section class="form-section hidden" id="section-lunch">
+      <section class="form-section hidden resub-gated" id="section-lunch">
         <!-- form.js injects lunch-kit + conditional protein block here -->
       </section>
 
       <!-- § Add-ons trigger ──────────────────────────────────────── -->
-      <section class="form-section" id="section-addon-trigger">
+      <section class="form-section resub-gated" id="section-addon-trigger">
         <h2 class="section-heading">Add-ons</h2>
         <p class="section-desc">Would you like to add any extra items to your order this week?</p>
         <div class="radio-group" role="radiogroup" aria-label="Add-ons">
@@ -76,7 +91,7 @@
       </section>
 
       <!-- § Add-on details — shown only when wantsAddOns=yes ─────── -->
-      <section class="form-section hidden" id="section-addons">
+      <section class="form-section hidden resub-gated" id="section-addons">
 
         <!-- Add-on: extra dinner portions -->
         <div id="addon-dinners-wrap">
@@ -127,7 +142,7 @@
       </section>
 
       <!-- § Order total — shown when add-ons selected ────────────── -->
-      <section class="form-section hidden" id="section-order-total">
+      <section class="form-section hidden resub-gated" id="section-order-total">
         <p class="order-total-label">Add-ons summary</p>
         <ul id="order-total-lines"></ul>
         <div id="order-total-amount"></div>
@@ -135,7 +150,7 @@
       </section>
 
       <!-- § Notes — always shown ──────────────────────────────────── -->
-      <section class="form-section" id="section-notes">
+      <section class="form-section resub-gated" id="section-notes">
         <div class="field-group">
           <label class="field-label" for="field-notes">Anything else you&rsquo;d like us to know? <span class="optional">(optional)</span></label>
           <textarea id="field-notes" name="notes" class="textarea-input" rows="4" maxlength="500" placeholder="Allergies, preferences, delivery notes…"></textarea>
@@ -144,7 +159,7 @@
       </section>
 
       <!-- § Submit ────────────────────────────────────────────────── -->
-      <section class="form-section form-actions">
+      <section class="form-section form-actions resub-gated">
         <button type="submit" id="btn-submit" class="btn btn-primary">Submit order</button>
         <p id="submit-error" class="submit-error hidden"></p>
       </section>
@@ -156,9 +171,18 @@
   <div id="screen-success" class="screen hidden">
     <div class="success-icon" aria-hidden="true">✓</div>
     <h2>Thank you!</h2>
-    <p id="success-message-main">Thank you for submitting your weekly menu selections! You will receive an email with a copy of your selections. If you need to make any changes, please resubmit before Wednesday at 11am.</p>
+    <p id="success-message-main">Thank you for submitting the weekly menu selection form. Here&rsquo;s a copy of your selections.</p>
+    <p id="success-message-addons" class="hidden"></p>
+    <p id="success-message-changes">If you need to make any changes, please resubmit before Wednesday at 11am.</p>
     <p id="success-message-delivery">Food deliveries will be made on Monday April 6 between the hours of 2-7pm.</p>
     <p class="submission-id">Confirmation ID: <strong id="success-submission-id"></strong></p>
+  </div>
+
+  <div id="submit-progress-overlay" class="hidden" role="status" aria-live="polite">
+    <div class="submit-progress-card">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Submission in progress, please wait...</p>
+    </div>
   </div>
 
 </div><!-- /#jsc-form-app -->
