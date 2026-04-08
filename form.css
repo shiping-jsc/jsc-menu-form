@@ -748,6 +748,17 @@ body {
 #success-message-changes { margin-top: .95rem; }
 #success-message-delivery { margin-top: .95rem; }
 
+.success-email-note {
+  margin-top: 1.25rem;
+  padding: .75rem 1rem;
+  background: #fef9ec;
+  border-left: 3px solid #e8b84b;
+  border-radius: 4px;
+  font-size: .88rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
 .submission-id {
   display: inline-block;
   font-size: .85rem;
