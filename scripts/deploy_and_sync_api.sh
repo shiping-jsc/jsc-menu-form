@@ -100,6 +100,9 @@ else
   echo "$DEPLOY_OUTPUT"
   DEPLOY_ID="$(printf '%s\n' "$DEPLOY_OUTPUT" | sed -nE 's/.*\- (AKfy[a-zA-Z0-9_-]+).*/\1/p' | head -n1)"
   if [[ -z "$DEPLOY_ID" ]]; then
+    DEPLOY_ID="$(printf '%s\n' "$DEPLOY_OUTPUT" | sed -nE 's/.*Deployed (AKfy[a-zA-Z0-9_-]+).*/\1/p' | head -n1)"
+  fi
+  if [[ -z "$DEPLOY_ID" ]]; then
     echo "Failed to parse deployment ID from clasp output." >&2
     exit 1
   fi
