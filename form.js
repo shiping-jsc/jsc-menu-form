@@ -11,6 +11,7 @@ var _formConfig = null;
 var _prefillData = null;
 var _apiUrl = null;
 var _existingSubmission = null;
+var _returnToUrl = null;
 
 function qs(sel) { return document.querySelector(sel); }
 function qsa(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
@@ -109,6 +110,19 @@ function resolveApiUrl() {
     return apiParam;
   }
   return window.FORM_API_URL || '';
+}
+
+function updateReturnToLink() {
+  var wrap = document.getElementById('success-return-wrap');
+  var link = document.getElementById('success-return-link');
+  if (!wrap || !link) return;
+  if (_returnToUrl && /^https:\/\//i.test(_returnToUrl)) {
+    link.setAttribute('href', _returnToUrl);
+    show(wrap);
+  } else {
+    link.removeAttribute('href');
+    hide(wrap);
+  }
 }
 
 function renderDinners() {
@@ -391,6 +405,8 @@ function updateSuccessCopy(updated, submittedData) {
   if (delivery) {
     delivery.textContent = 'Food deliveries will be made on ' + deliveryDate + ' between the hours of 2-7pm.';
   }
+
+  updateReturnToLink();
 }
 
 function updateResubmissionBanner(existingSubmission) {
@@ -681,6 +697,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   _token = getParam('token');
+  _returnToUrl = getParam('returnTo');
   if (!_token) {
     showFatal('Missing token in URL.');
     return;
