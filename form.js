@@ -118,22 +118,12 @@ function updateReturnToLink() {
   if (!wrap || !link) return;
   if (_returnToUrl && /^https:\/\//i.test(_returnToUrl)) {
     link.setAttribute('href', _returnToUrl);
-    link.setAttribute('target', 'jsc-portal');
-    link.onclick = function(evt) {
-      try {
-        if (window.opener && !window.opener.closed) {
-          evt.preventDefault();
-          window.opener.location.href = _returnToUrl;
-          window.opener.focus();
-          window.close();
-          return false;
-        }
-      } catch (e) {}
-      return true;
-    };
+    link.setAttribute('target', '_self');
+    link.onclick = null;
     show(wrap);
   } else {
     link.removeAttribute('href');
+    link.removeAttribute('target');
     link.onclick = null;
     hide(wrap);
   }
