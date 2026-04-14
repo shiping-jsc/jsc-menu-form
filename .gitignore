@@ -10,3 +10,11 @@ public/formConfig.js
 
 # Keep deployment ops docs local only
 DEPLOYMENT_RUNBOOK.md
+
+# Keep Copilot/agent customization files local-only
+copilot-instructions.md
+*.instructions.md
+*.prompt.md
+*.agent.md
+AGENTS.md
+SKILL.md
