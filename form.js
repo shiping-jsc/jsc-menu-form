@@ -131,6 +131,10 @@ function resolveReturnToUrl_() {
   if (direct && /^https:\/\//i.test(direct)) {
     return direct;
   }
+  var configuredPortal = String(window.CUSTOMER_PORTAL_URL || '').trim();
+  if (configuredPortal && /^https:\/\//i.test(configuredPortal)) {
+    return configuredPortal;
+  }
   var ref = String(document.referrer || '').trim();
   if (ref && /^https:\/\//i.test(ref)) {
     return ref;
