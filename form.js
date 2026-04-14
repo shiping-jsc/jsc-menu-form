@@ -118,8 +118,20 @@ function updateReturnToLink() {
   if (!wrap || !link) return;
   if (_returnToUrl && /^https:\/\//i.test(_returnToUrl)) {
     link.setAttribute('href', _returnToUrl);
-    link.setAttribute('target', '_self');
-    link.onclick = null;
+    link.removeAttribute('target');
+    link.onclick = function(evt) {
+      evt.preventDefault();
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = _returnToUrl;
+        } else {
+          window.location.href = _returnToUrl;
+        }
+      } catch (e) {
+        window.location.href = _returnToUrl;
+      }
+      return false;
+    };
     show(wrap);
   } else {
     link.removeAttribute('href');
