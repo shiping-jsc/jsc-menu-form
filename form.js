@@ -119,9 +119,22 @@ function updateReturnToLink() {
   if (_returnToUrl && /^https:\/\//i.test(_returnToUrl)) {
     link.setAttribute('href', _returnToUrl);
     link.setAttribute('target', 'jsc-portal');
+    link.onclick = function(evt) {
+      try {
+        if (window.opener && !window.opener.closed) {
+          evt.preventDefault();
+          window.opener.location.href = _returnToUrl;
+          window.opener.focus();
+          window.close();
+          return false;
+        }
+      } catch (e) {}
+      return true;
+    };
     show(wrap);
   } else {
     link.removeAttribute('href');
+    link.onclick = null;
     hide(wrap);
   }
 }
