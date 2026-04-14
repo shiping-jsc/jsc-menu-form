@@ -118,11 +118,24 @@ function updateReturnToLink() {
   if (!wrap || !link) return;
   if (_returnToUrl && /^https:\/\//i.test(_returnToUrl)) {
     link.setAttribute('href', _returnToUrl);
+    link.setAttribute('target', 'jsc-portal');
     show(wrap);
   } else {
     link.removeAttribute('href');
     hide(wrap);
   }
+}
+
+function resolveReturnToUrl_() {
+  var direct = getParam('returnTo');
+  if (direct && /^https:\/\//i.test(direct)) {
+    return direct;
+  }
+  var ref = String(document.referrer || '').trim();
+  if (ref && /^https:\/\//i.test(ref)) {
+    return ref;
+  }
+  return null;
 }
 
 function renderDinners() {
@@ -278,8 +291,25 @@ function setSectionComplete(sectionId, complete) {
 
 function setResubmissionGatedSectionsVisible(visible) {
   qsa('.resub-gated').forEach(function(el) {
-    if (visible) show(el);
-    else hide(el);
+    if (!visible) {
+      hide(el);
+      return;
+    }
+
+    if (el.id === 'section-lunch' && (!_planConfig || !_planConfig.showLunch)) {
+      hide(el);
+      return;
+    }
+
+    if (el.id === 'section-addons') {
+      var wantsAddOns = qs('[name="wantsAddOns"]:checked');
+      if (!wantsAddOns || wantsAddOns.value !== 'yes') {
+        hide(el);
+        return;
+      }
+    }
+
+    show(el);
   });
 }
 
@@ -697,7 +727,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   _token = getParam('token');
-  _returnToUrl = getParam('returnTo');
+  _returnToUrl = resolveReturnToUrl_();
   if (!_token) {
     showFatal('Missing token in URL.');
     return;
