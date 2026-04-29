@@ -115,7 +115,6 @@ function resolveApiUrl() {
 function updateReturnToLink() {
   var wrap = document.getElementById('success-return-wrap');
   var link = document.getElementById('success-return-link');
-  var fallbackLink = document.getElementById('success-return-fallback-link');
   if (!wrap || !link) return;
 
   var portalLoginUrl = null;
@@ -124,37 +123,49 @@ function updateReturnToLink() {
     portalLoginUrl = configuredPortal.replace(/[?#].*$/, '') + '?view=login';
   }
 
-  if (_returnToUrl && /^https:\/\//i.test(_returnToUrl)) {
-    link.setAttribute('href', _returnToUrl);
-    link.setAttribute('target', '_top');
-    link.setAttribute('rel', 'noopener');
-    link.onclick = null;
-    if (fallbackLink && portalLoginUrl) {
-      fallbackLink.setAttribute('href', portalLoginUrl);
-      fallbackLink.setAttribute('target', '_top');
-      fallbackLink.setAttribute('rel', 'noopener');
-      fallbackLink.style.display = '';
-    } else if (fallbackLink) {
-      fallbackLink.style.display = 'none';
-    }
-    show(wrap);
-  } else {
+  var primaryUrl = (_returnToUrl && /^https:\/\//i.test(_returnToUrl)) ? _returnToUrl : '';
+  var targetHref = primaryUrl || portalLoginUrl || '';
+  if (!targetHref) {
     link.removeAttribute('href');
     link.removeAttribute('target');
     link.onclick = null;
-    if (fallbackLink && portalLoginUrl) {
-      fallbackLink.setAttribute('href', portalLoginUrl);
-      fallbackLink.setAttribute('target', '_top');
-      fallbackLink.setAttribute('rel', 'noopener');
-      fallbackLink.style.display = '';
-      show(wrap);
-      return;
-    }
-    if (fallbackLink) {
-      fallbackLink.style.display = 'none';
-    }
     hide(wrap);
+    return;
   }
+
+  link.setAttribute('href', targetHref);
+  link.setAttribute('target', '_top');
+  link.setAttribute('rel', 'noopener');
+  link.onclick = function(evt) {
+    evt.preventDefault();
+
+    var destination = primaryUrl || portalLoginUrl;
+    if (primaryUrl && /[?&]magic=/i.test(primaryUrl) && portalLoginUrl) {
+      var cacheKey = 'portalReturnUsed:' + primaryUrl;
+      var used = false;
+      try {
+        used = sessionStorage.getItem(cacheKey) === '1';
+      } catch (e) {}
+      if (used) {
+        destination = portalLoginUrl;
+      }
+      try {
+        sessionStorage.setItem(cacheKey, '1');
+      } catch (e2) {}
+    }
+
+    try {
+      if (window.top && window.top !== window) {
+        window.top.location.href = destination;
+      } else {
+        window.location.href = destination;
+      }
+    } catch (e3) {
+      window.location.href = destination;
+    }
+    return false;
+  };
+  show(wrap);
 }
 
 function resolveReturnToUrl_() {
