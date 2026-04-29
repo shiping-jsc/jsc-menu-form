@@ -115,17 +115,44 @@ function resolveApiUrl() {
 function updateReturnToLink() {
   var wrap = document.getElementById('success-return-wrap');
   var link = document.getElementById('success-return-link');
+  var fallbackLink = document.getElementById('success-return-fallback-link');
   if (!wrap || !link) return;
+
+  var portalLoginUrl = null;
+  var configuredPortal = String(window.CUSTOMER_PORTAL_URL || '').trim();
+  if (configuredPortal && /^https:\/\//i.test(configuredPortal)) {
+    portalLoginUrl = configuredPortal.replace(/[?#].*$/, '') + '?view=login';
+  }
+
   if (_returnToUrl && /^https:\/\//i.test(_returnToUrl)) {
     link.setAttribute('href', _returnToUrl);
     link.setAttribute('target', '_top');
     link.setAttribute('rel', 'noopener');
     link.onclick = null;
+    if (fallbackLink && portalLoginUrl) {
+      fallbackLink.setAttribute('href', portalLoginUrl);
+      fallbackLink.setAttribute('target', '_top');
+      fallbackLink.setAttribute('rel', 'noopener');
+      fallbackLink.style.display = '';
+    } else if (fallbackLink) {
+      fallbackLink.style.display = 'none';
+    }
     show(wrap);
   } else {
     link.removeAttribute('href');
     link.removeAttribute('target');
     link.onclick = null;
+    if (fallbackLink && portalLoginUrl) {
+      fallbackLink.setAttribute('href', portalLoginUrl);
+      fallbackLink.setAttribute('target', '_top');
+      fallbackLink.setAttribute('rel', 'noopener');
+      fallbackLink.style.display = '';
+      show(wrap);
+      return;
+    }
+    if (fallbackLink) {
+      fallbackLink.style.display = 'none';
+    }
     hide(wrap);
   }
 }
