@@ -124,6 +124,9 @@ function updateReturnToLink() {
   }
 
   var primaryUrl = (_returnToUrl && /^https:\/\//i.test(_returnToUrl)) ? _returnToUrl : '';
+  if (primaryUrl && /[?&]view=dashboard/i.test(primaryUrl) && !(/[?&]sessionId=/i.test(primaryUrl) || /[?&]magic=/i.test(primaryUrl)) && portalLoginUrl) {
+    primaryUrl = portalLoginUrl;
+  }
   var targetHref = primaryUrl || portalLoginUrl || '';
   if (!targetHref) {
     link.removeAttribute('href');
@@ -172,6 +175,10 @@ function resolveReturnToUrl_() {
   var direct = getParam('returnTo');
   if (direct && /^https:\/\//i.test(direct)) {
     return direct;
+  }
+  var backup = getParam('portalReturn');
+  if (backup && /^https:\/\//i.test(backup)) {
+    return backup;
   }
   var configuredPortal = String(window.CUSTOMER_PORTAL_URL || '').trim();
   if (configuredPortal && /^https:\/\//i.test(configuredPortal)) {
